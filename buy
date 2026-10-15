@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日常開銷記錄問卷</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --background-color: #f5f7fa;
+            --card-background: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-background);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            margin-bottom: 30px;
+        }
+
+        h2, h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="date"],
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .file-help {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .preview-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        /* 歷史記錄表格樣式 */
+        .history-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        .action-bars {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .export-btn {
+            background-color: var(--success-color);
+            padding: 10px;
+            font-size: 14px;
+        }
+        .export-btn:hover {
+            background-color: #27ae60;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #edf2f7;
+            color: #4a5568;
+        }
+
+        .table-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        .clear-btn {
+            background-color: #e53e3e;
+            margin-top: 15px;
+            padding: 8px;
+            font-size: 14px;
+        }
+        .clear-btn:hover {
+            background-color: #c53030;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>記帳問卷表單</h2>
+        <form id="expenseForm">
+            <div class="form-group">
+                <label for="expDate">問題一：消費日期</label>
+                <input type="date" id="expDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="expItem">問題二：購買物品</label>
+                <input type="text" id="expItem" placeholder="例如：午餐、車費、波鞋" required>
+            </div>
+
+            <div class="form-group">
+                <label for="expPrice">問題三：價錢 (HKD)</label>
+                <input type="number" id="expPrice" step="0.1" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="expImages">新增位置：上傳收據 / 物品相片</label>
+                <input type="file" id="expImages" accept="image/*" multiple>
+                <div class="file-help">※ 可以選擇 1 張或以上相片（支援手機直接影相）</div>
+                <div class="preview-container" id="previewContainer"></div>
+            </div>
+
+            <button type="submit">提交記錄</button>
+        </form>
+    </div>
+
+    <div class="history-container">
+        <h3>已儲存的開銷記錄</h3>
+        <div class="action-bars">
+            <button class="export-btn" id="exportCSV">📊 匯出 Excel (CSV)</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table id="recordTable">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>物品</th>
+                        <th>價錢</th>
+                        <th>相片</th>
+                    </tr>
+                </thead>
+                <tbody id="recordBody"></tbody>
+            </table>
+        </div>
+        <button class="clear-btn" id="clearData">清除所有歷史記錄</button>
+    </div>
+
+    <script>
+        const expDateInput = document.getElementById('expDate');
+        const expImagesInput = document.getElementById('expImages');
+        const previewContainer = document.getElementById('previewContainer');
+        const expenseForm = document.getElementById('expenseForm');
+        const recordBody = document.getElementById('recordBody');
+        const clearDataBtn = document.getElementById('clearData');
+        const exportCSVBtn = document.getElementById('exportCSV');
+
+        expDateInput.value = new Date().toISOString().split('T')[0];
+        let currentBase64Images = [];
+
+        expImagesInput.addEventListener('change', function(e) {
+            previewContainer.innerHTML = '';
+            currentBase64Images = [];
+            const files = e.target.files;
+            if (files) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.classList.add('preview-image');
+                        previewContainer.appendChild(img);
+                        currentBase64Images.push(event.target.result);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        expenseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newRecord = {
+                date: document.getElementById('expDate').value,
+                item: document.getElementById('expItem').value,
+                price: parseFloat(document.getElementById('expPrice').value).toFixed(2),
+                images: currentBase64Images
+            };
+
+            let records = JSON.parse(localStorage.getItem('expenseRecords')) || [];
+            records.push(newRecord);
+            localStorage.setItem('expenseRecords', JSON.stringify(records));
+
+            renderTable();
+            expenseForm.reset();
+            expDateInput.value = new Date().toISOString().split('T')[0];
+            previewContainer.innerHTML = '';
+            currentBase64Images = [];
+            alert('提交成功！資料已儲存在本網頁中。');
+        });
+
+        function renderTable() {
+            recordBody.innerHTML = '';
+            const records = JSON.parse(localStorage.getItem('expenseRecords')) || [];
+            
+            // 複製一份來倒序顯示，不影響原始儲存順序
+            [...records].reverse().forEach(res => {
+                const tr = document.createElement('tr');
+                let imgHtml = '';
+                if(res.images && res.images.length > 0) {
+                    res.images.forEach(imgData => {
+                        imgHtml += `<img src="${imgData}" class="table-img" onclick="window.open('${imgData}')" title="點擊放大">`;
+                    });
+                } else {
+                    imgHtml = '<span style="color:#aaa;">無圖片</span>';
+                }
+
+                tr.innerHTML = `
+                    <td>${res.date}</td>
+                    <td>${res.item}</td>
+                    <td>$${res.price}</td>
+                    <td>${imgHtml}</td>
+                `;
+                recordBody.appendChild(tr);
+            });
+        }
+
+        // 匯出 CSV 功能 (包含 BOM 防止 Excel 中文亂碼)
+        exportCSVBtn.addEventListener('click', function() {
+            const records = JSON.parse(localStorage.getItem('expenseRecords')) || [];
+            if (records.length === 0) {
+                alert('目前沒有任何記錄可以匯出！');
+                return;
+            }
+
+            // 定義 CSV 標頭
+            let csvContent = "消費日期,購買物品,價錢(HKD)\n";
+
+            // 填入數據 (相片編碼太長，不適合收入 CSV，故不匯出圖片欄)
+            records.forEach(res => {
+                // 防止內容有逗號導致排版錯亂，用雙引號包裹
+                const safeItem = res.item.replace(/"/g, '""');
+                csvContent += `${res.date},"${safeItem}",${res.price}\n`;
+            });
+
